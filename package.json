@@ -1,0 +1,49 @@
+{
+  "name": "typeorm-docs-mcp",
+  "version": "0.1.0",
+  "description": "Offline TypeORM schema docs generator and MCP server",
+  "type": "module",
+  "bin": {
+    "typeorm-docs-mcp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "typeorm",
+    "mcp",
+    "markdown",
+    "erd",
+    "mermaid",
+    "schema",
+    "documentation"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "fast-glob": "^3.3.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.8",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "typeorm": ">=0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "typeorm": {
+      "optional": true
+    }
+  }
+}
