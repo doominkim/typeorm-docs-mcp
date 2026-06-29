@@ -1,6 +1,6 @@
 {
   "name": "typeorm-docs-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Offline TypeORM schema docs generator and MCP server",
   "type": "module",
   "bin": {
@@ -30,12 +30,12 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
     "fast-glob": "^3.3.3",
+    "typescript": "^5.8.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {

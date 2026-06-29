@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { runCli } from "../src/cli";
+import { isCliEntrypoint, runCli } from "../src/cli";
 
 describe("runCli", () => {
   it("prints Mermaid ERD for users who want a scriptable output", async () => {
@@ -38,5 +39,15 @@ describe("runCli", () => {
     expect(exitCode).toBe(0);
     expect(content).toContain("# Fixture Schema");
     expect(content).toContain("### `users`");
+  });
+
+  it("recognizes npm bin symlinks as CLI entrypoints", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "typeorm-docs-mcp-bin-"));
+    const realEntrypoint = path.join(tmp, "cli.js");
+    const npmBinSymlink = path.join(tmp, "typeorm-docs-mcp");
+    await fs.writeFile(realEntrypoint, "", "utf8");
+    await fs.symlink(realEntrypoint, npmBinSymlink);
+
+    expect(isCliEntrypoint(npmBinSymlink, pathToFileURL(realEntrypoint).href)).toBe(true);
   });
 });

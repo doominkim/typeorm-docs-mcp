@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { findUndocumentedSchema } from "./audit/find-undocumented-schema.js";
 import { analyzeTypeormSchema } from "./analyzer/analyze-typeorm-schema.js";
 import { startMcpServer } from "./mcp/server.js";
@@ -120,7 +121,22 @@ Usage:
   typeorm-docs-mcp serve
 `;
 
-if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+export const isCliEntrypoint = (
+  argvEntry: string | undefined,
+  moduleUrl: string,
+): boolean => {
+  if (argvEntry === undefined) return false;
+
+  const modulePath = fileURLToPath(moduleUrl);
+  try {
+    return realpathSync(argvEntry) === realpathSync(modulePath);
+  } catch (error) {
+    void error;
+    return pathToFileURL(argvEntry).href === moduleUrl;
+  }
+};
+
+if (isCliEntrypoint(process.argv[1], import.meta.url)) {
   const exitCode = await runCli(process.argv.slice(2));
   process.exitCode = exitCode;
 }
