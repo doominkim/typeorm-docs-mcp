@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyzeTypeormSchema } from "../src/analyzer/analyze-typeorm-schema";
 
@@ -52,5 +55,43 @@ describe("analyzeTypeormSchema", () => {
         description: "게시글 작성자",
       }),
     );
+  });
+
+  it("does not infer database nullability from TypeScript union types", async () => {
+    const projectRoot = await mkdtemp(path.join(os.tmpdir(), "typeorm-docs-mcp-"));
+    await writeFile(
+      path.join(projectRoot, "profile.entity.ts"),
+      `import { Column, Entity, PrimaryColumn } from "typeorm";
+
+/** 사용자 프로필. */
+@Entity("profiles")
+export class Profile {
+  /** 프로필 ID */
+  @PrimaryColumn({ type: "uuid" })
+  id!: string;
+
+  /** 별명 */
+  @Column({ type: "varchar" })
+  nickname!: string | null;
+
+  /** 소개 */
+  @Column({ type: "varchar", nullable: true })
+  bio!: string;
+}
+`,
+    );
+
+    const graph = await analyzeTypeormSchema({
+      entities: "*.entity.ts",
+      projectRoot,
+    });
+
+    const profile = graph.tables.find((table) => table.entityName === "Profile");
+    expect(profile?.columns.find((column) => column.propertyName === "nickname")).toMatchObject({
+      nullable: false,
+    });
+    expect(profile?.columns.find((column) => column.propertyName === "bio")).toMatchObject({
+      nullable: true,
+    });
   });
 });

@@ -158,7 +158,7 @@ const analyzeColumn = (
     primaryKey,
     generated: decorator.name === "PrimaryGeneratedColumn",
     unique: readObjectBooleanProperty(options, "unique") ?? false,
-    nullable: readObjectBooleanProperty(options, "nullable") ?? typeAllowsNull(tsType),
+    nullable: readObjectBooleanProperty(options, "nullable") ?? false,
     foreignKey: false,
     foreignKeyTargetTable: null,
     description: description || readObjectStringProperty(options, "comment") || "",
@@ -174,6 +174,8 @@ const analyzeRelation = (
   if (decorator === undefined) return null;
   const targetEntity = relationTargetName(decorator.call);
   if (targetEntity === null) return null;
+  const joinColumns = readJoinColumns(member);
+  const hasJoinTable = findDecoratorCall(member, ["JoinTable"]) !== undefined;
 
   return {
     propertyName,
@@ -181,8 +183,11 @@ const analyzeRelation = (
     targetEntity,
     targetTable: null,
     inverseSide: relationInverseSide(decorator.call),
-    joinColumns: readJoinColumns(member),
-    owning: decorator.name === "ManyToOne" || readJoinColumns(member).length > 0,
+    joinColumns,
+    owning:
+      decorator.name === "ManyToOne" ||
+      joinColumns.length > 0 ||
+      (decorator.name === "ManyToMany" && hasJoinTable),
     description,
   };
 };
@@ -219,5 +224,3 @@ const inferredColumnType = (decoratorName: string, tsType: string): string => {
   if (normalized.includes("Date")) return "timestamp";
   return "unknown";
 };
-
-const typeAllowsNull = (tsType: string): boolean => /\b(null|undefined)\b/.test(tsType);

@@ -21,13 +21,27 @@ describe("createMcpServer", () => {
         "generate_typeorm_markdown",
       ]);
 
+      const toolInput = {
+        entities: "test/fixtures/**/*.entity.ts",
+        projectRoot: process.cwd(),
+      };
+
+      const analysis = await client.callTool(
+        {
+          name: "analyze_typeorm_schema",
+          arguments: toolInput,
+        },
+        CallToolResultSchema,
+      );
+      const analysisText = firstTextContent(analysis);
+      expect(JSON.parse(analysisText).tables).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "blog_posts" })]),
+      );
+
       const erd = await client.callTool(
         {
           name: "generate_mermaid_erd",
-          arguments: {
-            entities: "test/fixtures/**/*.entity.ts",
-            projectRoot: process.cwd(),
-          },
+          arguments: toolInput,
         },
         CallToolResultSchema,
       );
@@ -38,9 +52,38 @@ describe("createMcpServer", () => {
       expect(first?.type === "text" ? first.text : "").toContain(
         "blog_posts }o--|| users : author",
       );
+
+      const markdown = await client.callTool(
+        {
+          name: "generate_typeorm_markdown",
+          arguments: { ...toolInput, title: "Fixture Schema" },
+        },
+        CallToolResultSchema,
+      );
+      const markdownText = firstTextContent(markdown);
+      expect(markdownText).toContain("# Fixture Schema");
+      expect(markdownText).toContain("### `blog_posts`");
+
+      const audit = await client.callTool(
+        {
+          name: "find_undocumented_schema",
+          arguments: toolInput,
+        },
+        CallToolResultSchema,
+      );
+      const auditText = firstTextContent(audit);
+      expect(JSON.parse(auditText).missingColumnDescriptions).toEqual(
+        expect.arrayContaining(["blog_posts.body", "users.passwordHash"]),
+      );
     } finally {
       await client.close();
       await server.close();
     }
   });
 });
+
+const firstTextContent = (result: unknown): string => {
+  const parsed = CallToolResultSchema.parse(result);
+  const first = parsed.content[0];
+  return first?.type === "text" ? first.text : "";
+};

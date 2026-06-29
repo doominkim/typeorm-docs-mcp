@@ -17,7 +17,7 @@ export const findUndocumentedSchema = (graph: SchemaGraph): UndocumentedSchemaRe
     if (table.description.trim().length === 0) report.missingTableDescriptions.push(table.name);
     for (const column of table.columns) {
       if (column.description.trim().length === 0) {
-        report.missingColumnDescriptions.push(`${table.name}.${column.propertyName}`);
+        report.missingColumnDescriptions.push(`${table.name}.${column.name}`);
       }
     }
     for (const relation of table.relations) {
